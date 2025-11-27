@@ -5,7 +5,7 @@
 - 实例规格:Ascend: 1*ascend-snt9b1|ARM: 24核 192GB
 - 镜像:ms2.7.1-cann8.2rc1:v3
 # 配置环境
-# 拉取mindyolo
+## 拉取mindyolo
 ```
 git clone https://github.com/mindspore-lab/mindyolo.git
 cd mindyolo
@@ -14,7 +14,7 @@ cd mindyolo
 ## 修改requirements.txt文件内容
 
 ```
-cp /home/ma-user/work/dog-guard-mindyolov8/requirements.txt /home/ma-user/work/mindyolo/requirements.txt
+cp /home/ma-user/work/dog-guard-ai/dog-guard-mindyolov8/requirements.txt /home/ma-user/work/mindyolo/requirements.txt
 ```
 
 ## 安装依赖
@@ -117,13 +117,13 @@ sed -i 's/self\.imgIds = \[int(Path(im_file)\.stem) for im_file in self\.img_fil
 ## 替换yaml配置文件和运行文件train.py
 
 ```
-cp /home/ma-user/work/dog-guard-mindyolov8/train.py /home/ma-user/work/mindyolo/train.py
-cp /home/ma-user/work/dog-guard-mindyolov8/yolov8m.yaml /home/ma-user/work/mindyolo/configs/yolov8/yolov8m.yaml
-cp /home/ma-user/work/dog-guard-mindyolov8/yolov8-base.yaml /home/ma-user/work/mindyolo/configs/yolov8/yolov8-base.yaml
+cp /home/ma-user/work/dog-guard-ai/dog-guard-mindyolov8/train.py /home/ma-user/work/mindyolo/train.py
+cp /home/ma-user/work/dog-guard-ai/dog-guard-mindyolov8/yolov8m.yaml /home/ma-user/work/mindyolo/configs/yolov8/yolov8m.yaml
+cp /home/ma-user/work/dog-guard-ai/dog-guard-mindyolov8/yolov8-base.yaml /home/ma-user/work/mindyolo/configs/yolov8/yolov8-base.yaml
 ```
 
 
-# 运行命令
+# 训练命令
 
 ```
 cd /home/ma-user/work/mindyolo
