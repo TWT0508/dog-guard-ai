@@ -1,8 +1,8 @@
 # 基于Mindspore的mindyolo训练Stanford-dogs数据集
 # 实例规格
 华为云model arts平台使用mindyolo的yolov8m训练自己的数据集
-实例规格:Ascend: 1*ascend-snt9b1|ARM: 24核 192GB
-镜像:ms2.7.1-cann8.2rc1:v3
+-实例规格:Ascend: 1*ascend-snt9b1|ARM: 24核 192GB
+-镜像:ms2.7.1-cann8.2rc1:v3
 # 配置环境
 # 拉取mindyolo
 ```
