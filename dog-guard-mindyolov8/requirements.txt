@@ -1,0 +1,16 @@
+# MindYOLO requirements
+# pip install -r /home/ma-user/work/mindyolo/requirements.txt
+# Setup
+pybind11>=2.10.4
+
+# Base
+numpy>=1.17.0
+PyYAML>=5.3
+tqdm
+opencv-python<=4.11.0.68
+opencv-python-headless<=4.11.0.68
+
+# Extras
+albumentations>=1.0.3
+pycocotools>=2.0.2
+
