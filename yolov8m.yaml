@@ -1,0 +1,99 @@
+# configs/yolov8/yolov8m.yaml
+
+__BASE__: [
+  # '../coco.yaml', # 已经注释掉了，很好
+  './hyp.scratch.med.yaml',
+  './yolov8-base.yaml' # 确保这个在列表中
+]
+
+overflow_still_update: False
+
+# --- 网络配置 ---
+# 注意：YOLOv8m 相比 base (n) 主要是增加了宽度（通道数）
+# 这里我们基于 yolo-base.yaml 修改关键参数
+network:
+  model_name: yolov8
+  nc: 120  # <-- 修改为斯坦福狗的类别数，覆盖基配置
+  reg_max: 16 # 可以保持不变或根据需要调整
+  stride: [8, 16, 32] # 通常不变
+  depth_multiple: 0.67
+  width_multiple: 0.75
+
+  # YOLOv8.0m backbone (假设是放大版的 n)
+  # 主要区别在于 Conv 和 C2f 中的通道数增加
+  backbone:
+    # [from, repeats, module, args]
+    - [-1, 1, ConvNormAct, [128, 3, 2]]  # 0-P1/2  (base: 64 -> m: 128)
+    - [-1, 1, ConvNormAct, [256, 3, 2]]  # 1-P2/4  (base: 128 -> m: 256)
+    - [-1, 6, C2f, [256, True]]          # 2       (base: 3xC2f[128] -> m: 6xC2f[256])
+    - [-1, 1, ConvNormAct, [512, 3, 2]]  # 3-P3/8  (base: 256 -> m: 512)
+    - [-1, 6, C2f, [512, True]]          # 4       (base: 6xC2f[256] -> m: 6xC2f[512])
+    - [-1, 1, ConvNormAct, [1024, 3, 2]] # 5-P4/16 (base: 512 -> m: 1024)
+    - [-1, 6, C2f, [1024, True]]         # 6       (base: 6xC2f[512] -> m: 6xC2f[1024])
+    - [-1, 1, ConvNormAct, [2048, 3, 2]] # 7-P5/32 (base: 1024 -> m: 2048 - 不一定，看具体实现，有时P5层保持1024)
+    - [-1, 3, C2f, [1024, True]]         # 8       (base: 3xC2f[1024] -> m: 3xC2f[1024] 或调整)
+    - [-1, 1, SPPF, [1024, 5]]           # 9       (通常保持不变)
+
+  # YOLOv8.0m head (通道数与backbone输出对应)
+  head:
+    # P5 (large)
+    - [-1, 1, Upsample, [None, 2, 'nearest']] # Up from P5 to P4 level
+    - [[-1, 6], 1, Concat, [1]]  # cat backbone P4 (index 6 from backbone)
+    - [-1, 3, C2f, [1024]]  # 12 (P4/16-medium) - 通道数根据concat后的输入调整
+
+    # P4 (medium)
+    - [-1, 1, Upsample, [None, 2, 'nearest']] # Up from P4 to P3 level
+    - [[-1, 4], 1, Concat, [1] ]  # cat backbone P3 (index 4 from backbone)
+    - [-1, 3, C2f, [512]]  # 15 (P3/8-small)
+
+    # P3 (small) -> P4
+    - [-1, 1, ConvNormAct, [512, 3, 2]] # Downsample P3 to P4 level
+    - [[ -1, 12], 1, Concat, [1]]  # cat head P4 (index 12 from head)
+    - [-1, 3, C2f, [1024]]  # 18 (P4/16-medium)
+
+    # P4 (medium) -> P5
+    - [-1, 1, ConvNormAct, [1024, 3, 2]] # Downsample P4 to P5 level
+    - [[-1, 9], 1, Concat, [1]]  # cat head P5 (index 9 from backbone, which is after SPPF)
+    - [-1, 3, C2f, [2048]]  # 21 (P5/32-large) - 通道数根据concat后的输入调整 (如果backbone P5是2048的话)
+
+    # Detection Head
+    - [[15, 18, 21], 1, YOLOv8Head, [nc, reg_max, stride]]  # Detect(P3, P4, P5)
+    # 注意：上面 head 中的具体通道数（如 C2f 的输入通道）需要根据 concat 操作后的真实通道数来精确计算。
+    # 以上只是一个示例，你需要根据实际的网络连接和通道变化来调整。
+    # 一个更稳妥的做法是查找 MindYOLO 项目中预定义的 yolov8m 网络结构配置。
+
+
+# --- 数据配置 ---
+data:
+  dataset_name: "COCO"
+  # --- 强制设置正确的路径 ---
+  train_set: data/stanford_dogs/train.txt
+  val_set: data/stanford_dogs/val.txt
+  train: data/stanford_dogs/train.txt
+  val: data/stanford_dogs/val.txt
+  nc: 120
+  names: [
+    'silky_terrier', 'Scottish_deerhound', 'Chesapeake_Bay_retriever', 'Ibizan_hound',
+    'wire-haired_fox_terrier', 'Saluki', 'cocker_spaniel', 'schipperke', 'borzoi', 'Pembroke',
+    'komondor', 'Staffordshire_bullterrier', 'standard_poodle', 'Eskimo_dog', 'English_foxhound',
+    'golden_retriever', 'Sealyham_terrier', 'Japanese_spaniel', 'miniature_schnauzer', 'malamute',
+    'malinois', 'Pekinese', 'giant_schnauzer', 'Mexican_hairless', 'Doberman', 'standard_schnauzer',
+    'dhole', 'German_shepherd', 'Bouvier_des_Flandres', 'Siberian_husky', 'Norwich_terrier',
+    'Irish_terrier', 'Norfolk_terrier', 'Saint_Bernard', 'Border_terrier', 'briard', 'Tibetan_mastiff',
+    'bull_mastiff', 'Maltese_dog', 'Kerry_blue_terrier', 'kuvasz', 'Greater_Swiss_Mountain_dog',
+    'Lakeland_terrier', 'Blenheim_spaniel', 'basset', 'West_Highland_white_terrier', 'Chihuahua',
+    'Border_collie', 'redbone', 'Irish_wolfhound', 'bluetick', 'miniature_poodle', 'Cardigan',
+    'EntleBucher', 'Norwegian_elkhound', 'German_short-haired_pointer', 'Bernese_mountain_dog',
+    'papillon', 'Tibetan_terrier', 'Gordon_setter', 'American_Staffordshire_terrier', 'vizsla',
+    'kelpie', 'Weimaraner', 'miniature_pinscher', 'boxer', 'chow', 'Old_English_sheepdog', 'pug',
+    'Rhodesian_ridgeback', 'Scotch_terrier', 'Shih-Tzu', 'affenpinscher', 'whippet', 'Sussex_spaniel',
+    'otterhound', 'flat-coated_retriever', 'English_setter', 'Italian_greyhound', 'Labrador_retriever',
+    'collie', 'cairn', 'Rottweiler', 'Australian_terrier', 'toy_terrier', 'Shetland_sheepdog',
+    'African_hunting_dog', 'Newfoundland', 'Walker_hound', 'Lhasa', 'beagle', 'Samoyed', 'Great_Dane',
+    'Airedale', 'bloodhound', 'Irish_setter', 'keeshond', 'Dandie_Dinmont', 'basenji', 'Bedlington_terrier',
+    'Appenzeller', 'clumber', 'toy_poodle', 'Great_Pyrenees', 'English_springer', 'Afghan_hound',
+    'Brittany_spaniel', 'Welsh_springer_spaniel', 'Boston_bull', 'dingo', 'soft-coated_wheaten_terrier',
+    'curly-coated_retriever', 'French_bulldog', 'Irish_water_spaniel', 'Pomeranian', 'Brabancon_griffon',
+    'Yorkshire_terrier', 'groenendael', 'Leonberg', 'black-and-tan_coonhound'
+  ]
+# --- End of data configuration ---
