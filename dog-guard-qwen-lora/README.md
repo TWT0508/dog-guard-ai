@@ -20,7 +20,8 @@ Qwen2.5-7B-Instruct 是一个70亿参数的大模型。notebook显存可能不�
 ## 开始Lora微调：
 
 ### 开始训练
-`python train_qlora.py`
+` cd dog-guard-qwen-lora/ `
+` python train_qlora.py `
 
 ### 输出
 
